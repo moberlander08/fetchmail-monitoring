@@ -1,0 +1,23 @@
+#!/bin/bash
+rtinstance=$1
+
+cat /dev/null > /usr/lib64/nagios/email-monitoring/output-$rtinstance.txt
+prove -v /usr/lib64/nagios/plugins/fetchmail_testing/t/test.t :: /usr/lib64/nagios/plugins/fetchmail_testing/fetchmailrc.py.json-$rtinstance > /usr/lib64/nagios/email-monitoring/output-$rtinstance.txt 2>&1
+outparse=$?
+
+E_SUCCESS="0"
+E_WARNING="1"
+E_CRITICAL="2"
+E_UNKNOWN="3"
+
+if [[ $outparse == 0 ]]
+	then
+		echo "All Clear"
+		status="OK"
+		exit ${E_SUCCESS}
+	else
+		echo "Mailbox check is not clear"
+		echo "See attached email file" | mutt -a "/usr/lib64/nagios/email-monitoring/output-$rtinstance.txt" -s "Email Mointoring check $rtinstance" -- <destination email address>
+		status="Critical"
+		exit ${E_CRITICAL}
+fi
